@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Coupelle (démo)">
+  <rect width="800" height="800" fill="#E9E4DA"/>
+  <g fill="none" stroke="#2A2521" stroke-opacity="0.05" stroke-width="1.5">
+    <circle cx="400" cy="470" r="70"/><circle cx="400" cy="470" r="140"/>
+    <circle cx="400" cy="470" r="215"/><circle cx="400" cy="470" r="300"/>
+  </g>
+  
+  <path d="M290 420 Q400 540 510 420 Z" fill="#B08243"/>
+  <ellipse cx="400" cy="420" rx="110" ry="24" fill="#8f6733"/>
+  <ellipse cx="400" cy="420" rx="110" ry="20" fill="#c99a5a"/>
+  <text x="400" y="742" text-anchor="middle" font-family="Georgia, serif" font-size="22"
+        fill="#8B8175" letter-spacing="3">Coupelle · DÉMO</text>
+</svg>

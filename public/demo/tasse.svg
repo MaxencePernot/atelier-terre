@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Tasse (démo)">
+  <rect width="800" height="800" fill="#E9E4DA"/>
+  <g fill="none" stroke="#2A2521" stroke-opacity="0.05" stroke-width="1.5">
+    <circle cx="400" cy="470" r="70"/><circle cx="400" cy="470" r="140"/>
+    <circle cx="400" cy="470" r="215"/><circle cx="400" cy="470" r="300"/>
+  </g>
+  
+  <path d="M330 360 L340 560 Q345 600 400 600 Q455 600 460 560 L470 360 Z" fill="#6B4B3A"/>
+  <ellipse cx="400" cy="360" rx="70" ry="15" fill="#4e3529"/>
+  <path d="M470 400 Q540 405 540 470 Q540 530 470 528" stroke="#6B4B3A" stroke-width="18" fill="none"/>
+  <text x="400" y="742" text-anchor="middle" font-family="Georgia, serif" font-size="22"
+        fill="#8B8175" letter-spacing="3">Tasse · DÉMO</text>
+</svg>

@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    font-feature-settings: 'ss01', 'cv01';
+  }
+
+  /* Fraunces reads best with its soft optical axis dialed up — it gives the
+     display type a hand-thrown, slightly imperfect character that echoes
+     the pottery itself. */
+  .font-display {
+    font-optical-sizing: auto;
+    font-variation-settings: 'SOFT' 40, 'WONK' 1;
+  }
+
+  h1, h2, h3 {
+    @apply font-display;
+  }
+
+  ::selection {
+    @apply bg-celadon text-paper;
+  }
+
+  /* Visible, on-brand keyboard focus everywhere. */
+  :focus-visible {
+    outline: 2px solid theme('colors.celadon-deep');
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .shell {
+    @apply mx-auto w-full max-w-shell px-5 sm:px-8;
+  }
+
+  .eyebrow {
+    @apply text-xs font-medium uppercase tracking-eyebrow text-celadon-deep;
+  }
+
+  /* Buttons ------------------------------------------------------------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3
+           text-sm font-medium transition-all duration-300 ease-out-soft
+           disabled:cursor-not-allowed disabled:opacity-45;
+  }
+  .btn-primary {
+    @apply btn bg-ink text-paper hover:bg-celadon-deep;
+  }
+  .btn-ghost {
+    @apply btn border border-ink/20 text-ink hover:border-ink hover:bg-ink hover:text-paper;
+  }
+  .btn-quiet {
+    @apply inline-flex items-center gap-1.5 text-sm font-medium text-ink-soft
+           underline-offset-4 transition-colors hover:text-ink hover:underline;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-ink-soft;
+  }
+  .field {
+    @apply w-full rounded-xl border border-ink/15 bg-surface px-4 py-3 text-ink
+           placeholder:text-ink-faint transition-colors
+           focus:border-celadon focus:outline-none focus:ring-2 focus:ring-celadon/30;
+  }
+
+  .hairline {
+    @apply border-t border-ink/10;
+  }
+
+  /* Signature motif: concentric throwing rings drawn purely in CSS. */
+  .rings {
+    background-image:
+      radial-gradient(circle, transparent 0 8%, rgba(42, 37, 33, 0.06) 8% 8.6%, transparent 8.6%),
+      radial-gradient(circle, transparent 0 17%, rgba(42, 37, 33, 0.06) 17% 17.5%, transparent 17.5%),
+      radial-gradient(circle, transparent 0 27%, rgba(42, 37, 33, 0.05) 27% 27.4%, transparent 27.4%),
+      radial-gradient(circle, transparent 0 38%, rgba(42, 37, 33, 0.04) 38% 38.3%, transparent 38.3%);
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+}
+
+@layer utilities {
+  .stagger > * {
+    opacity: 0;
+    animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.12s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.19s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.26s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.33s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.40s; }
+}

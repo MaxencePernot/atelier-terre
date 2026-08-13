@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Plan du site — pages statiques.
+  Remplacez https://atelier-terre.example par votre domaine réel.
+  Les URLs de produits (/produit/<slug>) et de catégories (/boutique/<slug>)
+  peuvent être ajoutées ici, ou générées automatiquement (voir README).
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://atelier-terre.example/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://atelier-terre.example/boutique</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://atelier-terre.example/a-propos</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://atelier-terre.example/contact</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://atelier-terre.example/livraison</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://atelier-terre.example/cgv</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://atelier-terre.example/mentions-legales</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://atelier-terre.example/confidentialite</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+</urlset>
