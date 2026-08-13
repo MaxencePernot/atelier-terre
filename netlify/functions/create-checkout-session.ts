@@ -20,7 +20,11 @@ const supabase = createClient(
   { auth: { persistSession: false } },
 )
 
-const SITE_URL = process.env.VITE_SITE_URL || process.env.URL || 'http://localhost:5173'
+const SITE_URL = (
+     process.env.VITE_SITE_URL ||
+     process.env.URL ||
+     'http://localhost:5173'
+   ).replace(/\/+$/, '')
 
 interface Body {
   items: { productId: string; quantity: number }[]
