@@ -1,13 +1,7 @@
 import type { Handler } from '@netlify/functions'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-
-/**
- * Webhook Stripe — SEUL endroit où une commande passe à "payé".
- * Ne jamais faire confiance au front pour valider un paiement : Stripe signe
- * l'événement, on vérifie la signature, puis on met à jour la base de façon
- * atomique (paiement + décrément de stock).
- */
+import { Resend } from 'resend'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2024-06-20',
@@ -21,11 +15,16 @@ const supabase = createClient(
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET as string
 
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+
+const FROM = 'Atelier Terre <onboarding@resend.dev>'
+
+const euros = (cents: number) => `${(cents / 100).toFixed(2).replace('.', ',')} €`
+
 export const handler: Handler = async (event) => {
   const sig = event.headers['stripe-signature']
   if (!sig) return { statusCode: 400, body: 'Signature manquante' }
 
-  // Stripe exige le corps BRUT pour vérifier la signature.
   const raw = event.isBase64Encoded
     ? Buffer.from(event.body || '', 'base64').toString('utf8')
     : event.body || ''
@@ -34,7 +33,6 @@ export const handler: Handler = async (event) => {
   try {
     stripeEvent = stripe.webhooks.constructEvent(raw, sig, WEBHOOK_SECRET)
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error('Signature webhook invalide:', e)
     return { statusCode: 400, body: 'Signature invalide' }
   }
@@ -45,7 +43,6 @@ export const handler: Handler = async (event) => {
       const orderId = session.metadata?.order_id
       if (!orderId) return ok()
 
-      // Idempotence : si déjà payé, on ne retraite pas (Stripe peut renvoyer l'événement).
       const { data: existing } = await supabase
         .from('orders')
         .select('id, payment_status')
@@ -53,7 +50,6 @@ export const handler: Handler = async (event) => {
         .maybeSingle()
       if (!existing || existing.payment_status === 'paid') return ok()
 
-      // 1. Marque la commande payée.
       await supabase
         .from('orders')
         .update({
@@ -63,10 +59,9 @@ export const handler: Handler = async (event) => {
         })
         .eq('id', orderId)
 
-      // 2. Décrémente le stock de chaque article (bascule en 'sold' si 0).
       const { data: items } = await supabase
         .from('order_items')
-        .select('product_id, quantity')
+        .select('product_name, product_id, quantity, unit_price_cents')
         .eq('order_id', orderId)
       for (const it of items ?? []) {
         if (it.product_id) {
@@ -77,18 +72,86 @@ export const handler: Handler = async (event) => {
         }
       }
 
-      // 3. Notifications e-mail (client + admin).
-      //    Branchez ici votre fournisseur (Resend, Postmark, SendGrid…).
-      //    Voir README → « E-mails transactionnels ».
-      // await sendConfirmationEmails(orderId)
+      try {
+        await sendConfirmationEmail(orderId, items ?? [])
+      } catch (mailErr) {
+        console.error('Envoi e-mail échoué (commande OK malgré tout):', mailErr)
+      }
     }
 
     return ok()
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error('Traitement webhook échoué:', e)
     return { statusCode: 500, body: 'Erreur serveur' }
   }
+}
+
+type Item = { product_name: string; quantity: number; unit_price_cents: number }
+
+async function sendConfirmationEmail(orderId: string, items: Item[]) {
+  if (!resend) {
+    console.log('RESEND_API_KEY absente : e-mail de confirmation ignoré.')
+    return
+  }
+
+  const { data: order } = await supabase
+    .from('orders')
+    .select('order_number, email, subtotal_cents, shipping_cents, total_cents')
+    .eq('id', orderId)
+    .maybeSingle()
+  if (!order) return
+
+  const rows = items
+    .map(
+      (it) =>
+        `<tr>
+           <td style="padding:8px 0;color:#2A2521;">${escapeHtml(it.product_name)} × ${it.quantity}</td>
+           <td style="padding:8px 0;text-align:right;color:#2A2521;">${euros(it.unit_price_cents * it.quantity)}</td>
+         </tr>`,
+    )
+    .join('')
+
+  const shippingLine = order.shipping_cents === 0 ? 'Offerte' : euros(order.shipping_cents)
+
+  const html = `
+  <div style="background:#E9E4DA;padding:32px 0;font-family:Helvetica,Arial,sans-serif;">
+    <div style="max-width:520px;margin:0 auto;background:#F3EFE7;border-radius:16px;padding:32px;">
+      <h1 style="font-size:22px;color:#2A2521;margin:0 0 4px;">Merci pour votre commande</h1>
+      <p style="color:#51705F;margin:0 0 24px;">Nous préparons votre pièce avec soin.</p>
+      <p style="color:#6B6157;margin:0 0 4px;font-size:14px;">Numéro de commande</p>
+      <p style="color:#2A2521;margin:0 0 20px;font-size:18px;font-weight:600;">${escapeHtml(order.order_number)}</p>
+      <table style="width:100%;border-collapse:collapse;border-top:1px solid #E0D8CB;">${rows}</table>
+      <table style="width:100%;border-collapse:collapse;border-top:1px solid #E0D8CB;margin-top:8px;">
+        <tr><td style="padding:8px 0;color:#6B6157;">Sous-total</td><td style="padding:8px 0;text-align:right;color:#6B6157;">${euros(order.subtotal_cents)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6B6157;">Livraison</td><td style="padding:4px 0;text-align:right;color:#6B6157;">${shippingLine}</td></tr>
+        <tr><td style="padding:8px 0;color:#2A2521;font-weight:600;">Total</td><td style="padding:8px 0;text-align:right;color:#2A2521;font-weight:600;">${euros(order.total_cents)}</td></tr>
+      </table>
+      <p style="color:#6B6157;font-size:13px;margin:24px 0 0;">Atelier Terre — céramiques tournées et émaillées à la main.</p>
+    </div>
+  </div>`
+
+  const text = `Merci pour votre commande !
+
+Numéro : ${order.order_number}
+${items.map((it) => `- ${it.product_name} x${it.quantity} : ${euros(it.unit_price_cents * it.quantity)}`).join('\n')}
+
+Sous-total : ${euros(order.subtotal_cents)}
+Livraison : ${shippingLine}
+Total : ${euros(order.total_cents)}
+
+Atelier Terre`
+
+  await resend.emails.send({
+    from: FROM,
+    to: order.email,
+    subject: `Confirmation de commande ${order.order_number} — Atelier Terre`,
+    html,
+    text,
+  })
+}
+
+function escapeHtml(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 const ok = () => ({ statusCode: 200, body: JSON.stringify({ received: true }) })
