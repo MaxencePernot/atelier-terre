@@ -1,2 +1,6 @@
+# Les appels /api/* vont aux fonctions serverless.
+# IMPORTANT : cette règle doit passer AVANT le fallback SPA ci-dessous.
+/api/*    /.netlify/functions/:splat    200
+
 # SPA fallback — laisse React Router gérer le routage client.
-/*    /index.html   200
+/*        /index.html                   200
