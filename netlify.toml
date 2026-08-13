@@ -3,8 +3,13 @@
   publish = "dist"
   functions = "netlify/functions"
 
-[functions]
-  node_bundler = "esbuild"
+# Ces variables sont PUBLIQUES par conception (l'URL Supabase, la clé "anon"
+# protégée par RLS, et la clé publishable Stripe) : elles sont censées se
+# trouver dans le site compilé. On les exclut donc du scanner de secrets de
+# Netlify. Les vraies clés secrètes (STRIPE_SECRET_KEY,
+# SUPABASE_SERVICE_ROLE_KEY) restent, elles, surveillées.
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,VITE_STRIPE_PUBLISHABLE_KEY"
 
 # Le webhook Stripe a besoin du corps brut : on le route explicitement.
 [[redirects]]
